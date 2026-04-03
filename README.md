@@ -26,7 +26,7 @@ SpeakQuest utilizes a multimodal approach (Text, Audio, and Visual) to create a 
 - **Styling:** Tailwind CSS (Modern utility-first approach)
 - **Animations:** Motion (for smooth, professional transitions)
 - **Icons:** Lucide React
-- **AI Integration (Conceptual):** Designed for Gemini Multimodal LLM integration.
+- **AI Integration (Conceptual):** Designed for OpenAI API multimodal LLM integration.
 
 ## Demo Scenario
 1. **Input:** Student says, *"I goed to school yesterday."*
