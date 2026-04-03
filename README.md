@@ -55,3 +55,7 @@ SpeakQuest targets the growing EdTech market by offering a scalable, low-cost al
 1. Copy `.env.example` to `.env`.
 2. Fill `OPENAI_API_KEY` with your OpenAI key.
 3. Start the app with `npm run dev` and use the Speaking Lab to send a sentence for live feedback generation.
+
+## Demo Note
+- Current implementation is optimized for midterm demonstration speed.
+- For production, route OpenAI requests through a backend service to keep API keys server-side.

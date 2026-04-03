@@ -402,6 +402,9 @@ Focus on past tense accuracy, short explanation (2 sentences max), pronunciation
         <h1 className="text-3xl font-bold text-slate-900 mb-2">Speaking Lab</h1>
         <p className="text-slate-600">Demo scenario: Weekend storytelling (past tense + pronunciation coaching).</p>
       </div>
+      <div className="mb-8 bg-amber-50 border border-amber-200 rounded-2xl p-4 text-sm text-amber-900">
+        <span className="font-bold">Presenter cue:</span> Ask the student to describe one weekend activity in 1-2 sentences, then show how SpeakQuest turns one attempt into correction + missions.
+      </div>
 
       <div className="grid lg:grid-cols-12 gap-8">
         {/* Interaction Panel */}
