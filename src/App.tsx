@@ -10,13 +10,11 @@ import {
   AlertCircle, 
   RefreshCw, 
   Image as ImageIcon, 
-  BookOpen, 
   Target, 
   Award, 
   ChevronRight, 
   Play, 
   Info,
-  Layout,
   Users,
   Zap,
   Globe,
@@ -24,88 +22,28 @@ import {
   Briefcase,
   DollarSign,
   Layers,
-  Handshake
+  Handshake,
+  Sparkles,
+  ArrowRight
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
 // --- Types ---
 type Page = 'landing' | 'practice' | 'canvas';
 
-interface FeedbackData {
+interface Task {
+  title: string;
+  description: string;
+}
+
+interface AnalysisResult {
   transcript: string;
   corrected: string;
   explanation: string;
   pronunciation: string[];
+  tasks: Task[];
   imageUrl: string;
-  tasks: {
-    id: number;
-    title: string;
-    description: string;
-    icon: React.ReactNode;
-  }[];
 }
-
-interface OpenAIResponsePayload {
-  transcript: string;
-  corrected: string;
-  explanation: string;
-  pronunciation: string[];
-  tasks: {
-    title: string;
-    description: string;
-  }[];
-}
-
-// --- Mock Data ---
-const MOCK_FEEDBACK: FeedbackData = {
-  transcript: "I goed to school yesterday.",
-  corrected: "I went to school yesterday.",
-  explanation: "The verb 'go' is irregular. Its past tense is 'went', not 'goed'.",
-  pronunciation: ["yesterday (/ˈjestədeɪ/)", "school (/skuːl/)"],
-  imageUrl: "https://images.unsplash.com/photo-1523050854058-8df90110c9f1?q=80&w=800&auto=format&fit=crop",
-  tasks: [
-    {
-      id: 1,
-      title: "Sentence Correction",
-      description: "Rewrite three sentences using the irregular past tense of 'go', 'eat', and 'see'.",
-      icon: <CheckCircle2 className="w-5 h-5 text-blue-500" />
-    },
-    {
-      id: 2,
-      title: "Shadowing Practice",
-      description: "Listen to the correct pronunciation and repeat 'I went to school yesterday' five times.",
-      icon: <Mic className="w-5 h-5 text-purple-500" />
-    },
-    {
-      id: 3,
-      title: "Picture Description",
-      description: "Look at the school image and describe what you did there using the past tense.",
-      icon: <ImageIcon className="w-5 h-5 text-green-500" />
-    }
-  ]
-};
-
-const TASK_ICONS = [
-  <CheckCircle2 className="w-5 h-5 text-blue-500" />,
-  <Mic className="w-5 h-5 text-purple-500" />,
-  <ImageIcon className="w-5 h-5 text-green-500" />
-];
-
-const toFeedbackData = (payload: OpenAIResponsePayload, fallbackInput: string): FeedbackData => {
-  return {
-    transcript: payload.transcript?.trim() || fallbackInput,
-    corrected: payload.corrected?.trim() || fallbackInput,
-    explanation: payload.explanation?.trim() || 'Great try! Keep practicing sentence patterns and verb forms.',
-    pronunciation: payload.pronunciation?.length ? payload.pronunciation : MOCK_FEEDBACK.pronunciation,
-    imageUrl: MOCK_FEEDBACK.imageUrl,
-    tasks: (payload.tasks?.length ? payload.tasks : MOCK_FEEDBACK.tasks).slice(0, 3).map((task, index) => ({
-      id: index + 1,
-      title: task.title,
-      description: task.description,
-      icon: TASK_ICONS[index] || <Target className="w-5 h-5 text-indigo-500" />
-    }))
-  };
-};
 
 // --- Components ---
 
@@ -134,13 +72,13 @@ const Navbar = ({ currentPage, setPage }: { currentPage: Page, setPage: (p: Page
           onClick={() => setPage('practice')}
           className={`text-sm font-medium transition-colors ${currentPage === 'practice' ? 'text-indigo-600' : 'text-slate-600 hover:text-indigo-600'}`}
         >
-          Demo
+          Practice
         </button>
         <button 
           onClick={() => setPage('canvas')}
           className={`text-sm font-medium transition-colors ${currentPage === 'canvas' ? 'text-indigo-600' : 'text-slate-600 hover:text-indigo-600'}`}
         >
-          Business Model
+          Strategy
         </button>
       </div>
       <button 
@@ -168,12 +106,12 @@ const LandingPage = ({ onStart }: { onStart: () => void }) => (
         <h1 className="text-5xl md:text-7xl font-extrabold text-slate-900 mb-6 tracking-tight">
           Master English Speaking <br />
           <span className="bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 via-violet-600 to-fuchsia-600">
-            With Multimodal AI
+            With OpenAI Intelligence
           </span>
         </h1>
         <p className="text-xl text-slate-600 max-w-2xl mx-auto mb-10 leading-relaxed">
           The next-generation speaking companion for junior high students. 
-          Real-time feedback, visual scaffolding, and personalized missions.
+          Real-time analysis, visual scaffolding, and personalized missions.
         </p>
         <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
           <button 
@@ -183,7 +121,7 @@ const LandingPage = ({ onStart }: { onStart: () => void }) => (
             Start Your Quest <ChevronRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
           </button>
           <button className="w-full sm:w-auto bg-white text-slate-700 border border-slate-200 px-8 py-4 rounded-2xl text-lg font-bold hover:bg-slate-50 transition-all flex items-center justify-center gap-2">
-            Watch Video <Play className="w-5 h-5" />
+            Watch Demo <Play className="w-5 h-5" />
           </button>
         </div>
       </motion.div>
@@ -200,13 +138,13 @@ const LandingPage = ({ onStart }: { onStart: () => void }) => (
           {[
             {
               icon: <Mic className="w-8 h-8 text-indigo-600" />,
-              title: "Speak Naturally",
-              desc: "Talk to the AI about daily topics or specific prompts. Our multimodal engine captures every nuance."
+              title: "Speak or Type",
+              desc: "Enter any English sentence. Our AI engine captures every nuance of your grammar and syntax."
             },
             {
               icon: <Zap className="w-8 h-8 text-amber-500" />,
-              title: "Instant Analysis",
-              desc: "Get immediate feedback on grammar, pronunciation, and fluency powered by advanced LLMs."
+              title: "Real-Time Analysis",
+              desc: "Get immediate feedback on grammar, pronunciation, and fluency powered by OpenAI GPT-4o."
             },
             {
               icon: <Target className="w-8 h-8 text-rose-500" />,
@@ -285,112 +223,41 @@ const LandingPage = ({ onStart }: { onStart: () => void }) => (
 );
 
 const PracticePage = () => {
-  const [isRecording, setIsRecording] = useState(false);
-  const [showFeedback, setShowFeedback] = useState(false);
+  const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
-  const [inputText, setInputText] = useState(MOCK_FEEDBACK.transcript);
-  const [errorMessage, setErrorMessage] = useState('');
-  const [feedback, setFeedback] = useState<FeedbackData>(MOCK_FEEDBACK);
+  const [result, setResult] = useState<AnalysisResult | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
-  const handleStartRecording = async () => {
-    const trimmedInput = inputText.trim();
-    if (!trimmedInput) {
-      setErrorMessage('Please enter a sentence first so OpenAI can analyze it.');
-      return;
-    }
+  const examples = [
+    "I goed to school yesterday.",
+    "She don't like apples.",
+    "We was playing football in the park.",
+    "I have been to London last year."
+  ];
 
-    if (!process.env.OPENAI_API_KEY) {
-      setErrorMessage('OPENAI_API_KEY is missing. Add it to your environment before using the analysis feature.');
-      return;
-    }
-
-    setErrorMessage('');
-    setShowFeedback(false);
-    setIsRecording(true);
-
-    await new Promise((resolve) => setTimeout(resolve, 1200));
-    setIsRecording(false);
+  const handleAnalyze = async (sentence: string = input) => {
+    if (!sentence.trim()) return;
+    
     setLoading(true);
+    setError(null);
+    setResult(null);
 
     try {
-      const response = await fetch('https://api.openai.com/v1/responses', {
+      const response = await fetch('/api/analyze', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${process.env.OPENAI_API_KEY}`
-        },
-        body: JSON.stringify({
-          model: 'gpt-4.1-mini',
-          input: [
-            {
-              role: 'system',
-              content: `You are an English speaking coach for teenagers.
-Return only structured JSON for the analysis result.
-Focus on grammar correction, short explanation, pronunciation focus words, and three practice missions.`
-            },
-            {
-              role: 'user',
-              content: `Analyze this learner sentence: "${trimmedInput}"`
-            }
-          ],
-          text: {
-            format: {
-              type: 'json_schema',
-              name: 'speakquest_feedback',
-              strict: true,
-              schema: {
-                type: 'object',
-                properties: {
-                  transcript: { type: 'string' },
-                  corrected: { type: 'string' },
-                  explanation: { type: 'string' },
-                  pronunciation: {
-                    type: 'array',
-                    items: { type: 'string' },
-                    minItems: 2,
-                    maxItems: 4
-                  },
-                  tasks: {
-                    type: 'array',
-                    minItems: 3,
-                    maxItems: 3,
-                    items: {
-                      type: 'object',
-                      properties: {
-                        title: { type: 'string' },
-                        description: { type: 'string' }
-                      },
-                      required: ['title', 'description'],
-                      additionalProperties: false
-                    },
-                  }
-                },
-                required: ['transcript', 'corrected', 'explanation', 'pronunciation', 'tasks'],
-                additionalProperties: false
-              }
-            }
-          }
-        })
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sentence }),
       });
 
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}`);
-      }
-
       const data = await response.json();
-      const outputText = typeof data.output_text === 'string' ? data.output_text.trim() : '';
-      if (!outputText) {
-        throw new Error('OpenAI returned an empty response.');
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to analyze sentence');
       }
 
-      const payload = JSON.parse(outputText) as OpenAIResponsePayload;
-      setFeedback(toFeedbackData(payload, trimmedInput));
-      setShowFeedback(true);
-    } catch (error) {
-      const message = error instanceof Error ? error.message : 'Unknown error';
-      setErrorMessage(`OpenAI request failed: ${message}`);
-      setFeedback(MOCK_FEEDBACK);
-      setShowFeedback(true);
+      setResult(data);
+    } catch (err: any) {
+      setError(err.message);
     } finally {
       setLoading(false);
     }
@@ -400,65 +267,67 @@ Focus on grammar correction, short explanation, pronunciation focus words, and t
     <div className="pt-24 pb-16 max-w-5xl mx-auto px-4">
       <div className="mb-12 text-center">
         <h1 className="text-3xl font-bold text-slate-900 mb-2">Speaking Lab</h1>
-        <p className="text-slate-600">Try the demo: Say "I goed to school yesterday."</p>
+        <p className="text-slate-600">Enter any sentence to get real-time AI feedback.</p>
       </div>
 
       <div className="grid lg:grid-cols-12 gap-8">
-        {/* Interaction Panel */}
+        {/* Input Panel */}
         <div className="lg:col-span-5">
-          <div className="bg-white rounded-[2.5rem] p-8 shadow-xl border border-slate-100 h-full flex flex-col items-center justify-center text-center">
-            <div className={`w-32 h-32 rounded-full flex items-center justify-center mb-8 transition-all duration-500 ${isRecording ? 'bg-rose-50 scale-110' : 'bg-indigo-50'}`}>
-              <div className={`w-24 h-24 rounded-full flex items-center justify-center transition-all duration-500 ${isRecording ? 'bg-rose-500 shadow-lg shadow-rose-200' : 'bg-indigo-600 shadow-lg shadow-indigo-200'}`}>
-                <Mic className={`w-10 h-10 text-white ${isRecording ? 'animate-pulse' : ''}`} />
-              </div>
-            </div>
-            
-            <h3 className="text-xl font-bold text-slate-900 mb-2">
-              {isRecording ? 'Listening...' : showFeedback ? 'Ready for next trial' : 'Tap to Speak'}
-            </h3>
-            <p className="text-slate-500 mb-8 max-w-xs">
-              {isRecording ? 'Speak clearly into your microphone.' : 'Practice your sentence and get instant AI feedback.'}
-            </p>
-
-            <div className="w-full mb-6 text-left">
-              <label className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2 block">
-                Practice Sentence
-              </label>
-              <textarea
-                value={inputText}
-                onChange={(e) => setInputText(e.target.value)}
-                rows={3}
-                className="w-full border border-slate-200 rounded-2xl p-3 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-300"
-                placeholder="Type what the student said..."
+          <div className="bg-white rounded-[2.5rem] p-8 shadow-xl border border-slate-100 h-full flex flex-col">
+            <div className="mb-6">
+              <label className="block text-sm font-bold text-slate-400 uppercase tracking-widest mb-3">Your Sentence</label>
+              <textarea 
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                placeholder="Type your English sentence here..."
+                className="w-full h-32 p-4 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition-all resize-none text-slate-800"
               />
             </div>
 
-            {!isRecording && !loading && (
-              <button 
-                onClick={handleStartRecording}
-                className="bg-indigo-600 text-white px-8 py-4 rounded-2xl font-bold hover:bg-indigo-700 transition-all shadow-lg active:scale-95"
-              >
-                {showFeedback ? 'Analyze Again' : 'Analyze with OpenAI'}
-              </button>
-            )}
-
-            {loading && (
-              <div className="flex items-center gap-3 text-indigo-600 font-bold">
-                <RefreshCw className="w-6 h-6 animate-spin" />
-                Analyzing Speech...
+            <div className="mb-8">
+              <label className="block text-sm font-bold text-slate-400 uppercase tracking-widest mb-3">Try an Example</label>
+              <div className="flex flex-wrap gap-2">
+                {examples.map((ex, i) => (
+                  <button 
+                    key={i}
+                    onClick={() => { setInput(ex); handleAnalyze(ex); }}
+                    className="text-xs font-medium bg-slate-100 text-slate-600 px-3 py-2 rounded-full hover:bg-indigo-50 hover:text-indigo-600 transition-all"
+                  >
+                    {ex}
+                  </button>
+                ))}
               </div>
-            )}
+            </div>
 
-            {errorMessage && (
-              <p className="mt-4 text-sm text-rose-500 font-medium">{errorMessage}</p>
-            )}
+            <button 
+              onClick={() => handleAnalyze()}
+              disabled={loading || !input.trim()}
+              className="mt-auto w-full bg-indigo-600 text-white py-4 rounded-2xl font-bold hover:bg-indigo-700 transition-all shadow-lg active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+            >
+              {loading ? <RefreshCw className="w-5 h-5 animate-spin" /> : <Sparkles className="w-5 h-5" />}
+              {loading ? 'Analyzing...' : 'Analyze Sentence'}
+            </button>
           </div>
         </div>
 
         {/* Feedback Panel */}
         <div className="lg:col-span-7">
           <AnimatePresence mode="wait">
-            {!showFeedback ? (
+            {error && (
+              <motion.div 
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="bg-rose-50 border border-rose-100 text-rose-600 p-6 rounded-3xl flex items-start gap-3"
+              >
+                <AlertCircle className="w-6 h-6 shrink-0" />
+                <div>
+                  <p className="font-bold mb-1">Analysis Failed</p>
+                  <p className="text-sm opacity-90">{error}</p>
+                </div>
+              </motion.div>
+            )}
+
+            {!result && !loading && !error && (
               <motion.div 
                 key="empty"
                 initial={{ opacity: 0 }}
@@ -467,9 +336,26 @@ Focus on grammar correction, short explanation, pronunciation focus words, and t
                 className="bg-slate-50 border-2 border-dashed border-slate-200 rounded-[2.5rem] h-full flex flex-col items-center justify-center p-12 text-slate-400"
               >
                 <Info className="w-12 h-12 mb-4" />
-                <p className="text-center font-medium">Your AI feedback will appear here after you speak.</p>
+                <p className="text-center font-medium">Your AI feedback will appear here after analysis.</p>
               </motion.div>
-            ) : (
+            )}
+
+            {loading && (
+              <motion.div 
+                key="loading"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className="bg-white rounded-[2.5rem] shadow-xl border border-slate-100 h-full flex flex-col items-center justify-center p-12"
+              >
+                <div className="w-20 h-20 bg-indigo-50 rounded-full flex items-center justify-center mb-6">
+                  <RefreshCw className="w-10 h-10 text-indigo-600 animate-spin" />
+                </div>
+                <h3 className="text-xl font-bold text-slate-900 mb-2">AI is Thinking...</h3>
+                <p className="text-slate-500 text-center">Analyzing grammar, pronunciation, and generating tasks.</p>
+              </motion.div>
+            )}
+
+            {result && (
               <motion.div 
                 key="feedback"
                 initial={{ opacity: 0, x: 20 }}
@@ -485,21 +371,21 @@ Focus on grammar correction, short explanation, pronunciation focus words, and t
                     <div className="flex gap-3">
                       <div className="mt-1"><AlertCircle className="w-5 h-5 text-rose-500" /></div>
                       <div>
-                        <p className="text-sm text-slate-500 mb-1">You said:</p>
-                        <p className="text-lg font-medium text-slate-800 line-through decoration-rose-300">"{feedback.transcript}"</p>
+                        <p className="text-sm text-slate-500 mb-1">Original:</p>
+                        <p className="text-lg font-medium text-slate-800">"{result.transcript}"</p>
                       </div>
                     </div>
                     <div className="flex gap-3">
                       <div className="mt-1"><CheckCircle2 className="w-5 h-5 text-green-500" /></div>
                       <div>
                         <p className="text-sm text-slate-500 mb-1">AI Corrected:</p>
-                        <p className="text-lg font-bold text-indigo-600">"{feedback.corrected}"</p>
+                        <p className="text-lg font-bold text-indigo-600">"{result.corrected}"</p>
                       </div>
                     </div>
                   </div>
                   <div className="mt-6 p-4 bg-indigo-50 rounded-2xl border border-indigo-100">
                     <p className="text-sm text-indigo-900 leading-relaxed">
-                      <span className="font-bold">Grammar Tip:</span> {feedback.explanation}
+                      <span className="font-bold">Coach's Note:</span> {result.explanation}
                     </p>
                   </div>
                 </div>
@@ -508,10 +394,10 @@ Focus on grammar correction, short explanation, pronunciation focus words, and t
                 <div className="grid md:grid-cols-2 gap-6">
                   <div className="bg-white rounded-3xl p-6 shadow-md border border-slate-100">
                     <h4 className="font-bold text-slate-900 mb-4 flex items-center gap-2">
-                      <Mic className="w-4 h-4 text-indigo-600" /> Pronunciation
+                      <Mic className="w-4 h-4 text-indigo-600" /> Pronunciation Focus
                     </h4>
                     <ul className="space-y-3">
-                      {feedback.pronunciation.map((item, i) => (
+                      {result.pronunciation.map((item, i) => (
                         <li key={i} className="flex items-center gap-2 text-sm text-slate-600 bg-slate-50 p-2 rounded-lg">
                           <Play className="w-3 h-3 text-indigo-400" /> {item}
                         </li>
@@ -523,7 +409,7 @@ Focus on grammar correction, short explanation, pronunciation focus words, and t
                       <ImageIcon className="w-4 h-4 text-indigo-600" /> Visual Context
                     </h4>
                     <img 
-                      src={feedback.imageUrl} 
+                      src={result.imageUrl} 
                       alt="Context" 
                       className="w-full h-24 object-cover rounded-xl"
                       referrerPolicy="no-referrer"
@@ -540,14 +426,14 @@ Focus on grammar correction, short explanation, pronunciation focus words, and t
                     <span className="text-xs font-bold bg-indigo-800 px-3 py-1 rounded-full text-indigo-200">3 NEW TASKS</span>
                   </div>
                   <div className="space-y-4">
-                    {feedback.tasks.map((task) => (
+                    {result.tasks.map((task, i) => (
                       <motion.div 
-                        key={task.id}
+                        key={i}
                         whileHover={{ x: 5 }}
                         className="bg-white/10 backdrop-blur-sm p-4 rounded-2xl border border-white/10 flex items-start gap-4 cursor-pointer hover:bg-white/20 transition-all"
                       >
                         <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center shrink-0">
-                          {task.icon}
+                          <ArrowRight className="w-5 h-5 text-indigo-600" />
                         </div>
                         <div>
                           <h5 className="font-bold mb-1">{task.title}</h5>
@@ -578,9 +464,9 @@ const BusinessModelCanvas = () => (
       <div className="md:row-span-2 bg-white p-6 rounded-3xl shadow-sm border border-slate-100">
         <h3 className="font-bold text-indigo-600 mb-4 flex items-center gap-2"><Handshake className="w-5 h-5" /> Key Partners</h3>
         <ul className="text-sm text-slate-600 space-y-3">
-          <li>• Educational Publishers (Content)</li>
+          <li>• Educational Publishers</li>
           <li>• Junior High Schools (B2B)</li>
-          <li>• AI Research Labs (Gemini/LLM)</li>
+          <li>• AI Research Labs (OpenAI)</li>
           <li>• Cloud Infrastructure Providers</li>
         </ul>
       </div>
@@ -601,7 +487,7 @@ const BusinessModelCanvas = () => (
         <ul className="text-sm text-indigo-900 space-y-3">
           <li>• <span className="font-bold">Personalized:</span> 1-on-1 feedback at scale.</li>
           <li>• <span className="font-bold">Safe:</span> Judgment-free speaking practice.</li>
-          <li>• <span className="font-bold">Multimodal:</span> Visual/Audio/Text integration.</li>
+          <li>• <span className="font-bold">Intelligent:</span> GPT-4o powered analysis.</li>
           <li>• <span className="font-bold">Adaptive:</span> Dynamic mission generation.</li>
         </ul>
       </div>
@@ -651,7 +537,7 @@ const BusinessModelCanvas = () => (
       <div className="md:col-span-2 bg-white p-6 rounded-3xl shadow-sm border border-slate-100">
         <h3 className="font-bold text-indigo-600 mb-4 flex items-center gap-2"><Briefcase className="w-5 h-5" /> Cost Structure</h3>
         <div className="grid grid-cols-2 gap-4 text-sm text-slate-600">
-          <div>• AI API Usage Costs</div>
+          <div>• OpenAI API Usage Costs</div>
           <div>• R&D / Engineering</div>
           <div>• Marketing & Sales</div>
           <div>• Server Maintenance</div>
@@ -676,8 +562,8 @@ const BusinessModelCanvas = () => (
         <h2 className="text-3xl font-bold mb-8">Course Relevance</h2>
         <div className="grid sm:grid-cols-2 gap-8">
           {[
-            { title: "Multimodal AI", desc: "Integrates speech (audio), text (analysis), and vision (scaffolding) for holistic learning." },
-            { title: "LLM Applications", desc: "Utilizes Large Language Models for sophisticated grammar parsing and contextual feedback." },
+            { title: "Multimodal AI", desc: "Integrates speech-to-text (conceptual), text analysis, and visual scaffolding for holistic learning." },
+            { title: "LLM Applications", desc: "Utilizes OpenAI GPT-4o for sophisticated grammar parsing and contextual feedback." },
             { title: "Generative AI", desc: "Dynamically creates unique practice missions based on individual student performance." },
             { title: "Human-AI Interaction", desc: "Focuses on a supportive, non-judgmental interface to lower the 'Affective Filter' in L2 acquisition." }
           ].map((item, i) => (
@@ -697,7 +583,6 @@ const BusinessModelCanvas = () => (
 export default function App() {
   const [page, setPage] = useState<Page>('landing');
 
-  // Smooth scroll to top on page change
   useEffect(() => {
     window.scrollTo(0, 0);
   }, [page]);
@@ -746,9 +631,8 @@ export default function App() {
         </AnimatePresence>
       </main>
 
-      {/* Footer */}
       <footer className="bg-slate-900 text-slate-400 py-12 border-t border-slate-800">
-        <div className="max-w-7xl mx-auto px-4">
+        <div className="max-w-7xl mx-auto px-4 text-center md:text-left">
           <div className="flex flex-col md:flex-row justify-between items-center gap-8">
             <div className="flex items-center gap-2">
               <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center text-white">
@@ -761,7 +645,7 @@ export default function App() {
               <a href="#" className="hover:text-white transition-colors">Terms</a>
               <a href="#" className="hover:text-white transition-colors">Contact</a>
             </div>
-            <p className="text-sm">© 2026 SpeakQuest AI. Academic Midterm Prototype.</p>
+            <p className="text-sm">© 2026 SpeakQuest AI. Graduate Midterm Project.</p>
           </div>
         </div>
       </footer>
