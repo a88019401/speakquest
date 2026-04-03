@@ -1,0 +1,5 @@
+{
+  "name": "SpeakQuest",
+  "description": "An AI-Powered Multimodal English Speaking Feedback and Task Generation System for junior high students.",
+  "requestFramePermissions": ["microphone"]
+}
