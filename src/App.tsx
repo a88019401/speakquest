@@ -45,6 +45,17 @@ interface FeedbackData {
   }[];
 }
 
+interface OpenAIResponsePayload {
+  transcript: string;
+  corrected: string;
+  explanation: string;
+  pronunciation: string[];
+  tasks: {
+    title: string;
+    description: string;
+  }[];
+}
+
 // --- Mock Data ---
 const MOCK_FEEDBACK: FeedbackData = {
   transcript: "I goed to school yesterday.",
@@ -72,6 +83,28 @@ const MOCK_FEEDBACK: FeedbackData = {
       icon: <ImageIcon className="w-5 h-5 text-green-500" />
     }
   ]
+};
+
+const TASK_ICONS = [
+  <CheckCircle2 className="w-5 h-5 text-blue-500" />,
+  <Mic className="w-5 h-5 text-purple-500" />,
+  <ImageIcon className="w-5 h-5 text-green-500" />
+];
+
+const toFeedbackData = (payload: OpenAIResponsePayload, fallbackInput: string): FeedbackData => {
+  return {
+    transcript: payload.transcript?.trim() || fallbackInput,
+    corrected: payload.corrected?.trim() || fallbackInput,
+    explanation: payload.explanation?.trim() || 'Great try! Keep practicing sentence patterns and verb forms.',
+    pronunciation: payload.pronunciation?.length ? payload.pronunciation : MOCK_FEEDBACK.pronunciation,
+    imageUrl: MOCK_FEEDBACK.imageUrl,
+    tasks: (payload.tasks?.length ? payload.tasks : MOCK_FEEDBACK.tasks).slice(0, 3).map((task, index) => ({
+      id: index + 1,
+      title: task.title,
+      description: task.description,
+      icon: TASK_ICONS[index] || <Target className="w-5 h-5 text-indigo-500" />
+    }))
+  };
 };
 
 // --- Components ---
@@ -255,17 +288,112 @@ const PracticePage = () => {
   const [isRecording, setIsRecording] = useState(false);
   const [showFeedback, setShowFeedback] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [inputText, setInputText] = useState(MOCK_FEEDBACK.transcript);
+  const [errorMessage, setErrorMessage] = useState('');
+  const [feedback, setFeedback] = useState<FeedbackData>(MOCK_FEEDBACK);
 
-  const handleStartRecording = () => {
+  const handleStartRecording = async () => {
+    const trimmedInput = inputText.trim();
+    if (!trimmedInput) {
+      setErrorMessage('Please enter a sentence first so OpenAI can analyze it.');
+      return;
+    }
+
+    if (!process.env.OPENAI_API_KEY) {
+      setErrorMessage('OPENAI_API_KEY is missing. Add it to your environment before using the analysis feature.');
+      return;
+    }
+
+    setErrorMessage('');
+    setShowFeedback(false);
     setIsRecording(true);
-    setTimeout(() => {
-      setIsRecording(false);
-      setLoading(true);
-      setTimeout(() => {
-        setLoading(false);
-        setShowFeedback(true);
-      }, 1500);
-    }, 3000);
+
+    await new Promise((resolve) => setTimeout(resolve, 1200));
+    setIsRecording(false);
+    setLoading(true);
+
+    try {
+      const response = await fetch('https://api.openai.com/v1/responses', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${process.env.OPENAI_API_KEY}`
+        },
+        body: JSON.stringify({
+          model: 'gpt-4.1-mini',
+          input: [
+            {
+              role: 'system',
+              content: `You are an English speaking coach for teenagers.
+Return only structured JSON for the analysis result.
+Focus on grammar correction, short explanation, pronunciation focus words, and three practice missions.`
+            },
+            {
+              role: 'user',
+              content: `Analyze this learner sentence: "${trimmedInput}"`
+            }
+          ],
+          text: {
+            format: {
+              type: 'json_schema',
+              name: 'speakquest_feedback',
+              strict: true,
+              schema: {
+                type: 'object',
+                properties: {
+                  transcript: { type: 'string' },
+                  corrected: { type: 'string' },
+                  explanation: { type: 'string' },
+                  pronunciation: {
+                    type: 'array',
+                    items: { type: 'string' },
+                    minItems: 2,
+                    maxItems: 4
+                  },
+                  tasks: {
+                    type: 'array',
+                    minItems: 3,
+                    maxItems: 3,
+                    items: {
+                      type: 'object',
+                      properties: {
+                        title: { type: 'string' },
+                        description: { type: 'string' }
+                      },
+                      required: ['title', 'description'],
+                      additionalProperties: false
+                    },
+                  }
+                },
+                required: ['transcript', 'corrected', 'explanation', 'pronunciation', 'tasks'],
+                additionalProperties: false
+              }
+            }
+          }
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+      }
+
+      const data = await response.json();
+      const outputText = typeof data.output_text === 'string' ? data.output_text.trim() : '';
+      if (!outputText) {
+        throw new Error('OpenAI returned an empty response.');
+      }
+
+      const payload = JSON.parse(outputText) as OpenAIResponsePayload;
+      setFeedback(toFeedbackData(payload, trimmedInput));
+      setShowFeedback(true);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      setErrorMessage(`OpenAI request failed: ${message}`);
+      setFeedback(MOCK_FEEDBACK);
+      setShowFeedback(true);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -292,12 +420,25 @@ const PracticePage = () => {
               {isRecording ? 'Speak clearly into your microphone.' : 'Practice your sentence and get instant AI feedback.'}
             </p>
 
+            <div className="w-full mb-6 text-left">
+              <label className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2 block">
+                Practice Sentence
+              </label>
+              <textarea
+                value={inputText}
+                onChange={(e) => setInputText(e.target.value)}
+                rows={3}
+                className="w-full border border-slate-200 rounded-2xl p-3 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-300"
+                placeholder="Type what the student said..."
+              />
+            </div>
+
             {!isRecording && !loading && (
               <button 
                 onClick={handleStartRecording}
                 className="bg-indigo-600 text-white px-8 py-4 rounded-2xl font-bold hover:bg-indigo-700 transition-all shadow-lg active:scale-95"
               >
-                {showFeedback ? 'Try Again' : 'Start Recording'}
+                {showFeedback ? 'Analyze Again' : 'Analyze with OpenAI'}
               </button>
             )}
 
@@ -306,6 +447,10 @@ const PracticePage = () => {
                 <RefreshCw className="w-6 h-6 animate-spin" />
                 Analyzing Speech...
               </div>
+            )}
+
+            {errorMessage && (
+              <p className="mt-4 text-sm text-rose-500 font-medium">{errorMessage}</p>
             )}
           </div>
         </div>
@@ -341,20 +486,20 @@ const PracticePage = () => {
                       <div className="mt-1"><AlertCircle className="w-5 h-5 text-rose-500" /></div>
                       <div>
                         <p className="text-sm text-slate-500 mb-1">You said:</p>
-                        <p className="text-lg font-medium text-slate-800 line-through decoration-rose-300">"{MOCK_FEEDBACK.transcript}"</p>
+                        <p className="text-lg font-medium text-slate-800 line-through decoration-rose-300">"{feedback.transcript}"</p>
                       </div>
                     </div>
                     <div className="flex gap-3">
                       <div className="mt-1"><CheckCircle2 className="w-5 h-5 text-green-500" /></div>
                       <div>
                         <p className="text-sm text-slate-500 mb-1">AI Corrected:</p>
-                        <p className="text-lg font-bold text-indigo-600">"{MOCK_FEEDBACK.corrected}"</p>
+                        <p className="text-lg font-bold text-indigo-600">"{feedback.corrected}"</p>
                       </div>
                     </div>
                   </div>
                   <div className="mt-6 p-4 bg-indigo-50 rounded-2xl border border-indigo-100">
                     <p className="text-sm text-indigo-900 leading-relaxed">
-                      <span className="font-bold">Grammar Tip:</span> {MOCK_FEEDBACK.explanation}
+                      <span className="font-bold">Grammar Tip:</span> {feedback.explanation}
                     </p>
                   </div>
                 </div>
@@ -366,7 +511,7 @@ const PracticePage = () => {
                       <Mic className="w-4 h-4 text-indigo-600" /> Pronunciation
                     </h4>
                     <ul className="space-y-3">
-                      {MOCK_FEEDBACK.pronunciation.map((item, i) => (
+                      {feedback.pronunciation.map((item, i) => (
                         <li key={i} className="flex items-center gap-2 text-sm text-slate-600 bg-slate-50 p-2 rounded-lg">
                           <Play className="w-3 h-3 text-indigo-400" /> {item}
                         </li>
@@ -378,7 +523,7 @@ const PracticePage = () => {
                       <ImageIcon className="w-4 h-4 text-indigo-600" /> Visual Context
                     </h4>
                     <img 
-                      src={MOCK_FEEDBACK.imageUrl} 
+                      src={feedback.imageUrl} 
                       alt="Context" 
                       className="w-full h-24 object-cover rounded-xl"
                       referrerPolicy="no-referrer"
@@ -395,7 +540,7 @@ const PracticePage = () => {
                     <span className="text-xs font-bold bg-indigo-800 px-3 py-1 rounded-full text-indigo-200">3 NEW TASKS</span>
                   </div>
                   <div className="space-y-4">
-                    {MOCK_FEEDBACK.tasks.map((task) => (
+                    {feedback.tasks.map((task) => (
                       <motion.div 
                         key={task.id}
                         whileHover={{ x: 5 }}
