@@ -26,7 +26,7 @@ SpeakQuest utilizes a multimodal approach (Text, Audio, and Visual) to create a 
 - **Styling:** Tailwind CSS (Modern utility-first approach)
 - **Animations:** Motion (for smooth, professional transitions)
 - **Icons:** Lucide React
-- **AI Integration (Conceptual):** Designed for Gemini Multimodal LLM integration.
+- **AI Integration (Conceptual):** Designed for OpenAI API multimodal LLM integration.
 
 ## Demo Scenario
 1. **Input:** Student says, *"I goed to school yesterday."*
@@ -50,3 +50,8 @@ SpeakQuest targets the growing EdTech market by offering a scalable, low-cost al
 - Personalized voice synthesis for shadowing practice.
 - Gamification elements (badges, levels, streaks).
 - Teacher dashboard for classroom-wide progress monitoring.
+
+## OpenAI Setup
+1. Copy `.env.example` to `.env`.
+2. Fill `OPENAI_API_KEY` with your OpenAI key.
+3. Start the app with `npm run dev` and use the Speaking Lab to send a sentence for live feedback generation.
