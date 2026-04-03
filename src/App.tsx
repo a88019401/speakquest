@@ -45,33 +45,66 @@ interface FeedbackData {
   }[];
 }
 
+interface OpenAIResponsePayload {
+  transcript: string;
+  corrected: string;
+  explanation: string;
+  pronunciation: string[];
+  tasks: {
+    title: string;
+    description: string;
+  }[];
+}
+
 // --- Mock Data ---
 const MOCK_FEEDBACK: FeedbackData = {
-  transcript: "I goed to school yesterday.",
-  corrected: "I went to school yesterday.",
-  explanation: "The verb 'go' is irregular. Its past tense is 'went', not 'goed'.",
-  pronunciation: ["yesterday (/ˈjestədeɪ/)", "school (/skuːl/)"],
+  transcript: "Last weekend I go to the science museum with my cousin and we watch a robot show.",
+  corrected: "Last weekend, I went to the science museum with my cousin, and we watched a robot show.",
+  explanation: "Great story idea. Use past tense consistently for a completed event: 'go → went' and 'watch → watched'. Also add commas to separate clauses for clearer speaking rhythm.",
+  pronunciation: ["weekend (/ˌwiːkˈend/)", "museum (/mjuˈziːəm/)", "robot (/ˈroʊˌbɑːt/)"],
   imageUrl: "https://images.unsplash.com/photo-1523050854058-8df90110c9f1?q=80&w=800&auto=format&fit=crop",
   tasks: [
     {
       id: 1,
-      title: "Sentence Correction",
-      description: "Rewrite three sentences using the irregular past tense of 'go', 'eat', and 'see'.",
+      title: "Past Tense Drill (Level A2)",
+      description: "Change these verbs to past tense in full sentences: go, see, make, take, watch.",
       icon: <CheckCircle2 className="w-5 h-5 text-blue-500" />
     },
     {
       id: 2,
-      title: "Shadowing Practice",
-      description: "Listen to the correct pronunciation and repeat 'I went to school yesterday' five times.",
+      title: "30-Second Shadowing",
+      description: "Repeat the corrected sentence 5 times and stress: 'went', 'museum', and 'watched'.",
       icon: <Mic className="w-5 h-5 text-purple-500" />
     },
     {
       id: 3,
-      title: "Picture Description",
-      description: "Look at the school image and describe what you did there using the past tense.",
+      title: "Extension Challenge",
+      description: "Add two more details (when, who, how you felt) using past tense in one fluent answer.",
       icon: <ImageIcon className="w-5 h-5 text-green-500" />
     }
   ]
+};
+
+const TASK_ICONS = [
+  <CheckCircle2 className="w-5 h-5 text-blue-500" />,
+  <Mic className="w-5 h-5 text-purple-500" />,
+  <ImageIcon className="w-5 h-5 text-green-500" />
+];
+
+const toFeedbackData = (payload: OpenAIResponsePayload, fallbackInput: string): FeedbackData => {
+  return {
+    transcript: payload.transcript?.trim() || fallbackInput,
+    corrected: payload.corrected?.trim() || fallbackInput,
+    explanation: payload.explanation?.trim() || 'Great try! Keep practicing sentence patterns and verb forms.',
+    pronunciation: payload.pronunciation?.length ? payload.pronunciation : MOCK_FEEDBACK.pronunciation,
+    imageUrl: MOCK_FEEDBACK.imageUrl,
+    tasks: (payload.tasks?.length ? payload.tasks : MOCK_FEEDBACK.tasks).slice(0, 3).map((task, index) => ({
+      id: index + 1,
+      title: task.title,
+      description: task.description,
+      icon: TASK_ICONS[index] || <Target className="w-5 h-5 text-indigo-500" />
+    }))
+  };
 };
 
 // --- Components ---
@@ -130,27 +163,27 @@ const LandingPage = ({ onStart }: { onStart: () => void }) => (
         transition={{ duration: 0.6 }}
       >
         <span className="inline-block py-1 px-3 rounded-full bg-indigo-50 text-indigo-600 text-xs font-bold uppercase tracking-wider mb-6">
-          AI-Powered English Learning
+          Midterm Prototype • OpenAI Responses API
         </span>
         <h1 className="text-5xl md:text-7xl font-extrabold text-slate-900 mb-6 tracking-tight">
-          Master English Speaking <br />
+          Turn Every Speaking Attempt <br />
           <span className="bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 via-violet-600 to-fuchsia-600">
-            With Multimodal AI
+            into Actionable Coaching
           </span>
         </h1>
         <p className="text-xl text-slate-600 max-w-2xl mx-auto mb-10 leading-relaxed">
-          The next-generation speaking companion for junior high students. 
-          Real-time feedback, visual scaffolding, and personalized missions.
+          SpeakQuest helps Grade 7–9 EFL students practice safely, receive instant grammar + pronunciation feedback,
+          and continue with targeted follow-up missions teachers can actually use in class.
         </p>
         <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
           <button 
             onClick={onStart}
             className="w-full sm:w-auto bg-indigo-600 text-white px-8 py-4 rounded-2xl text-lg font-bold hover:bg-indigo-700 transition-all shadow-xl shadow-indigo-200 flex items-center justify-center gap-2 group"
           >
-            Start Your Quest <ChevronRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+            Run Live Demo <ChevronRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
           </button>
           <button className="w-full sm:w-auto bg-white text-slate-700 border border-slate-200 px-8 py-4 rounded-2xl text-lg font-bold hover:bg-slate-50 transition-all flex items-center justify-center gap-2">
-            Watch Video <Play className="w-5 h-5" />
+            Classroom Use Case <Play className="w-5 h-5" />
           </button>
         </div>
       </motion.div>
@@ -161,24 +194,24 @@ const LandingPage = ({ onStart }: { onStart: () => void }) => (
       <div className="max-w-7xl mx-auto px-4">
         <div className="text-center mb-16">
           <h2 className="text-3xl font-bold text-slate-900 mb-4">How It Works</h2>
-          <p className="text-slate-600">A seamless loop of speaking, learning, and growing.</p>
+          <p className="text-slate-600">A 3-step loop designed for real classroom speaking practice.</p>
         </div>
         <div className="grid md:grid-cols-3 gap-8">
           {[
             {
               icon: <Mic className="w-8 h-8 text-indigo-600" />,
               title: "Speak Naturally",
-              desc: "Talk to the AI about daily topics or specific prompts. Our multimodal engine captures every nuance."
+              desc: "Students answer a teacher prompt (20–40 seconds) in authentic, imperfect spoken English."
             },
             {
               icon: <Zap className="w-8 h-8 text-amber-500" />,
               title: "Instant Analysis",
-              desc: "Get immediate feedback on grammar, pronunciation, and fluency powered by advanced LLMs."
+              desc: "OpenAI generates correction, short grammar coaching, and pronunciation focus words in seconds."
             },
             {
               icon: <Target className="w-8 h-8 text-rose-500" />,
               title: "Personalized Missions",
-              desc: "AI generates follow-up tasks specifically designed to fix your unique speaking weaknesses."
+              desc: "Each student gets 3 targeted missions, so practice time becomes deliberate—not repetitive."
             }
           ].map((item, i) => (
             <motion.div 
@@ -203,14 +236,14 @@ const LandingPage = ({ onStart }: { onStart: () => void }) => (
         <div className="flex flex-col lg:flex-row items-center gap-16">
           <div className="lg:w-1/2">
             <h2 className="text-4xl font-bold text-slate-900 mb-8 leading-tight">
-              Bridging the Gap in <br />
-              Language Acquisition
+              Why This Matters for <br />
+              Junior High EFL
             </h2>
             <div className="space-y-6">
               {[
-                { title: "Safe Environment", desc: "Students can practice without fear of judgment, building confidence privately." },
-                { title: "Multimodal Scaffolding", desc: "Visual and textual hints help students connect sounds to meaning faster." },
-                { title: "Scalable Tutoring", desc: "Provides high-quality speaking feedback that was previously only available via expensive 1-on-1 tutors." }
+                { title: "Safe Repetition", desc: "Students can retry answers privately before speaking in front of peers." },
+                { title: "Teacher Time Saved", desc: "Routine correction is automated, so teachers focus on higher-level coaching." },
+                { title: "Evidence of Progress", desc: "Mission-based practice provides visible improvement across attempts." }
               ].map((item, i) => (
                 <div key={i} className="flex gap-4">
                   <div className="mt-1">
@@ -255,24 +288,119 @@ const PracticePage = () => {
   const [isRecording, setIsRecording] = useState(false);
   const [showFeedback, setShowFeedback] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [inputText, setInputText] = useState(MOCK_FEEDBACK.transcript);
+  const [errorMessage, setErrorMessage] = useState('');
+  const [feedback, setFeedback] = useState<FeedbackData>(MOCK_FEEDBACK);
 
-  const handleStartRecording = () => {
+  const handleStartRecording = async () => {
+    const trimmedInput = inputText.trim();
+    if (!trimmedInput) {
+      setErrorMessage('Please enter a sentence first so OpenAI can analyze it.');
+      return;
+    }
+
+    if (!process.env.OPENAI_API_KEY) {
+      setErrorMessage('OPENAI_API_KEY is missing. Add it to your environment before using the analysis feature.');
+      return;
+    }
+
+    setErrorMessage('');
+    setShowFeedback(false);
     setIsRecording(true);
-    setTimeout(() => {
-      setIsRecording(false);
-      setLoading(true);
-      setTimeout(() => {
-        setLoading(false);
-        setShowFeedback(true);
-      }, 1500);
-    }, 3000);
+
+    await new Promise((resolve) => setTimeout(resolve, 1200));
+    setIsRecording(false);
+    setLoading(true);
+
+    try {
+      const response = await fetch('https://api.openai.com/v1/responses', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${process.env.OPENAI_API_KEY}`
+        },
+        body: JSON.stringify({
+          model: 'gpt-4.1-mini',
+          input: [
+            {
+              role: 'system',
+              content: `You are an English speaking coach for teenagers.
+Return only structured JSON for the analysis result.
+Focus on past tense accuracy, short explanation (2 sentences max), pronunciation focus words, and three classroom-friendly practice missions.`
+            },
+            {
+              role: 'user',
+              content: `Analyze this learner sentence: "${trimmedInput}"`
+            }
+          ],
+          text: {
+            format: {
+              type: 'json_schema',
+              name: 'speakquest_feedback',
+              strict: true,
+              schema: {
+                type: 'object',
+                properties: {
+                  transcript: { type: 'string' },
+                  corrected: { type: 'string' },
+                  explanation: { type: 'string' },
+                  pronunciation: {
+                    type: 'array',
+                    items: { type: 'string' },
+                    minItems: 2,
+                    maxItems: 4
+                  },
+                  tasks: {
+                    type: 'array',
+                    minItems: 3,
+                    maxItems: 3,
+                    items: {
+                      type: 'object',
+                      properties: {
+                        title: { type: 'string' },
+                        description: { type: 'string' }
+                      },
+                      required: ['title', 'description'],
+                      additionalProperties: false
+                    },
+                  }
+                },
+                required: ['transcript', 'corrected', 'explanation', 'pronunciation', 'tasks'],
+                additionalProperties: false
+              }
+            }
+          }
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+      }
+
+      const data = await response.json();
+      const outputText = typeof data.output_text === 'string' ? data.output_text.trim() : '';
+      if (!outputText) {
+        throw new Error('OpenAI returned an empty response.');
+      }
+
+      const payload = JSON.parse(outputText) as OpenAIResponsePayload;
+      setFeedback(toFeedbackData(payload, trimmedInput));
+      setShowFeedback(true);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      setErrorMessage(`OpenAI request failed: ${message}`);
+      setFeedback(MOCK_FEEDBACK);
+      setShowFeedback(true);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
     <div className="pt-24 pb-16 max-w-5xl mx-auto px-4">
       <div className="mb-12 text-center">
         <h1 className="text-3xl font-bold text-slate-900 mb-2">Speaking Lab</h1>
-        <p className="text-slate-600">Try the demo: Say "I goed to school yesterday."</p>
+        <p className="text-slate-600">Demo scenario: Weekend storytelling (past tense + pronunciation coaching).</p>
       </div>
 
       <div className="grid lg:grid-cols-12 gap-8">
@@ -292,12 +420,25 @@ const PracticePage = () => {
               {isRecording ? 'Speak clearly into your microphone.' : 'Practice your sentence and get instant AI feedback.'}
             </p>
 
+            <div className="w-full mb-6 text-left">
+              <label className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2 block">
+                Practice Sentence
+              </label>
+              <textarea
+                value={inputText}
+                onChange={(e) => setInputText(e.target.value)}
+                rows={3}
+                className="w-full border border-slate-200 rounded-2xl p-3 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-300"
+                placeholder="Type what the student said..."
+              />
+            </div>
+
             {!isRecording && !loading && (
               <button 
                 onClick={handleStartRecording}
                 className="bg-indigo-600 text-white px-8 py-4 rounded-2xl font-bold hover:bg-indigo-700 transition-all shadow-lg active:scale-95"
               >
-                {showFeedback ? 'Try Again' : 'Start Recording'}
+                {showFeedback ? 'Analyze Again' : 'Analyze with OpenAI'}
               </button>
             )}
 
@@ -306,6 +447,10 @@ const PracticePage = () => {
                 <RefreshCw className="w-6 h-6 animate-spin" />
                 Analyzing Speech...
               </div>
+            )}
+
+            {errorMessage && (
+              <p className="mt-4 text-sm text-rose-500 font-medium">{errorMessage}</p>
             )}
           </div>
         </div>
@@ -322,7 +467,7 @@ const PracticePage = () => {
                 className="bg-slate-50 border-2 border-dashed border-slate-200 rounded-[2.5rem] h-full flex flex-col items-center justify-center p-12 text-slate-400"
               >
                 <Info className="w-12 h-12 mb-4" />
-                <p className="text-center font-medium">Your AI feedback will appear here after you speak.</p>
+                <p className="text-center font-medium">Your AI feedback will appear here after analysis.</p>
               </motion.div>
             ) : (
               <motion.div 
@@ -341,20 +486,20 @@ const PracticePage = () => {
                       <div className="mt-1"><AlertCircle className="w-5 h-5 text-rose-500" /></div>
                       <div>
                         <p className="text-sm text-slate-500 mb-1">You said:</p>
-                        <p className="text-lg font-medium text-slate-800 line-through decoration-rose-300">"{MOCK_FEEDBACK.transcript}"</p>
+                        <p className="text-lg font-medium text-slate-800 line-through decoration-rose-300">"{feedback.transcript}"</p>
                       </div>
                     </div>
                     <div className="flex gap-3">
                       <div className="mt-1"><CheckCircle2 className="w-5 h-5 text-green-500" /></div>
                       <div>
-                        <p className="text-sm text-slate-500 mb-1">AI Corrected:</p>
-                        <p className="text-lg font-bold text-indigo-600">"{MOCK_FEEDBACK.corrected}"</p>
+                        <p className="text-sm text-slate-500 mb-1">Suggested Revision:</p>
+                        <p className="text-lg font-bold text-indigo-600">"{feedback.corrected}"</p>
                       </div>
                     </div>
                   </div>
                   <div className="mt-6 p-4 bg-indigo-50 rounded-2xl border border-indigo-100">
                     <p className="text-sm text-indigo-900 leading-relaxed">
-                      <span className="font-bold">Grammar Tip:</span> {MOCK_FEEDBACK.explanation}
+                      <span className="font-bold">Coach Note:</span> {feedback.explanation}
                     </p>
                   </div>
                 </div>
@@ -366,7 +511,7 @@ const PracticePage = () => {
                       <Mic className="w-4 h-4 text-indigo-600" /> Pronunciation
                     </h4>
                     <ul className="space-y-3">
-                      {MOCK_FEEDBACK.pronunciation.map((item, i) => (
+                      {feedback.pronunciation.map((item, i) => (
                         <li key={i} className="flex items-center gap-2 text-sm text-slate-600 bg-slate-50 p-2 rounded-lg">
                           <Play className="w-3 h-3 text-indigo-400" /> {item}
                         </li>
@@ -378,7 +523,7 @@ const PracticePage = () => {
                       <ImageIcon className="w-4 h-4 text-indigo-600" /> Visual Context
                     </h4>
                     <img 
-                      src={MOCK_FEEDBACK.imageUrl} 
+                      src={feedback.imageUrl} 
                       alt="Context" 
                       className="w-full h-24 object-cover rounded-xl"
                       referrerPolicy="no-referrer"
@@ -395,7 +540,7 @@ const PracticePage = () => {
                     <span className="text-xs font-bold bg-indigo-800 px-3 py-1 rounded-full text-indigo-200">3 NEW TASKS</span>
                   </div>
                   <div className="space-y-4">
-                    {MOCK_FEEDBACK.tasks.map((task) => (
+                    {feedback.tasks.map((task) => (
                       <motion.div 
                         key={task.id}
                         whileHover={{ x: 5 }}
@@ -424,8 +569,8 @@ const PracticePage = () => {
 const BusinessModelCanvas = () => (
   <div className="pt-24 pb-16 max-w-7xl mx-auto px-4">
     <div className="mb-12 text-center">
-      <h1 className="text-3xl font-bold text-slate-900 mb-2">Business Strategy</h1>
-      <p className="text-slate-600 italic">SpeakQuest: Academic-Business Framework</p>
+      <h1 className="text-3xl font-bold text-slate-900 mb-2">Business Model Canvas</h1>
+      <p className="text-slate-600 italic">Pilot assumption: 3 junior high schools, 900 active students, 1 semester</p>
     </div>
 
     <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
@@ -433,10 +578,10 @@ const BusinessModelCanvas = () => (
       <div className="md:row-span-2 bg-white p-6 rounded-3xl shadow-sm border border-slate-100">
         <h3 className="font-bold text-indigo-600 mb-4 flex items-center gap-2"><Handshake className="w-5 h-5" /> Key Partners</h3>
         <ul className="text-sm text-slate-600 space-y-3">
-          <li>• Educational Publishers (Content)</li>
-          <li>• Junior High Schools (B2B)</li>
-          <li>• AI Research Labs (Gemini/LLM)</li>
-          <li>• Cloud Infrastructure Providers</li>
+          <li>• School English Departments (pilot classes)</li>
+          <li>• Curriculum advisors & teacher trainers</li>
+          <li>• OpenAI API platform partner</li>
+          <li>• Cloud hosting / monitoring providers</li>
         </ul>
       </div>
 
@@ -444,9 +589,9 @@ const BusinessModelCanvas = () => (
       <div className="bg-white p-6 rounded-3xl shadow-sm border border-slate-100">
         <h3 className="font-bold text-indigo-600 mb-4 flex items-center gap-2"><Zap className="w-5 h-5" /> Key Activities</h3>
         <ul className="text-sm text-slate-600 space-y-3">
-          <li>• AI Model Fine-tuning</li>
-          <li>• UX Design for Kids</li>
-          <li>• Content Generation</li>
+          <li>• Prompt + rubric iteration with teachers</li>
+          <li>• Weekly mission content release</li>
+          <li>• Classroom pilot support & onboarding</li>
         </ul>
       </div>
 
@@ -454,10 +599,10 @@ const BusinessModelCanvas = () => (
       <div className="md:row-span-2 bg-indigo-50 p-6 rounded-3xl shadow-md border border-indigo-100">
         <h3 className="font-bold text-indigo-700 mb-4 flex items-center gap-2"><Award className="w-5 h-5" /> Value Propositions</h3>
         <ul className="text-sm text-indigo-900 space-y-3">
-          <li>• <span className="font-bold">Personalized:</span> 1-on-1 feedback at scale.</li>
-          <li>• <span className="font-bold">Safe:</span> Judgment-free speaking practice.</li>
-          <li>• <span className="font-bold">Multimodal:</span> Visual/Audio/Text integration.</li>
-          <li>• <span className="font-bold">Adaptive:</span> Dynamic mission generation.</li>
+          <li>• <span className="font-bold">Instant:</span> actionable speaking feedback in under 10 seconds.</li>
+          <li>• <span className="font-bold">Aligned:</span> mission tasks mapped to school speaking objectives.</li>
+          <li>• <span className="font-bold">Scalable:</span> class-wide practice without increasing teacher grading load.</li>
+          <li>• <span className="font-bold">Motivating:</span> short, achievable micro-missions for daily practice.</li>
         </ul>
       </div>
 
@@ -465,9 +610,9 @@ const BusinessModelCanvas = () => (
       <div className="bg-white p-6 rounded-3xl shadow-sm border border-slate-100">
         <h3 className="font-bold text-indigo-600 mb-4 flex items-center gap-2"><Users className="w-5 h-5" /> Relationships</h3>
         <ul className="text-sm text-slate-600 space-y-3">
-          <li>• Automated Personalized Support</li>
-          <li>• Student Communities</li>
-          <li>• Teacher Dashboards</li>
+          <li>• In-app AI coaching per speaking attempt</li>
+          <li>• Teacher weekly progress digest</li>
+          <li>• Monthly school pilot review meeting</li>
         </ul>
       </div>
 
@@ -475,10 +620,10 @@ const BusinessModelCanvas = () => (
       <div className="md:row-span-2 bg-white p-6 rounded-3xl shadow-sm border border-slate-100">
         <h3 className="font-bold text-indigo-600 mb-4 flex items-center gap-2"><Globe className="w-5 h-5" /> Customer Segments</h3>
         <ul className="text-sm text-slate-600 space-y-3">
-          <li>• Junior High Students (ESL/EFL)</li>
-          <li>• Public/Private Schools</li>
-          <li>• Parents seeking EdTech solutions</li>
-          <li>• Self-directed adult beginners</li>
+          <li>• Grade 7–9 EFL students</li>
+          <li>• Public/private junior high schools</li>
+          <li>• English teachers needing speaking evidence</li>
+          <li>• After-school language programs</li>
         </ul>
       </div>
 
@@ -486,9 +631,9 @@ const BusinessModelCanvas = () => (
       <div className="bg-white p-6 rounded-3xl shadow-sm border border-slate-100">
         <h3 className="font-bold text-indigo-600 mb-4 flex items-center gap-2"><Layers className="w-5 h-5" /> Key Resources</h3>
         <ul className="text-sm text-slate-600 space-y-3">
-          <li>• Proprietary Feedback Algorithms</li>
-          <li>• Educational Content Database</li>
-          <li>• Skilled Engineering Team</li>
+          <li>• Prompt library + feedback rubrics</li>
+          <li>• Student speaking dataset (anonymized)</li>
+          <li>• Frontend + AI integration engineering</li>
         </ul>
       </div>
 
@@ -496,9 +641,9 @@ const BusinessModelCanvas = () => (
       <div className="bg-white p-6 rounded-3xl shadow-sm border border-slate-100">
         <h3 className="font-bold text-indigo-600 mb-4 flex items-center gap-2"><TrendingUp className="w-5 h-5" /> Channels</h3>
         <ul className="text-sm text-slate-600 space-y-3">
-          <li>• Web/Mobile App Stores</li>
-          <li>• School District Sales</li>
-          <li>• Social Media (Education focus)</li>
+          <li>• Direct school pilot partnerships</li>
+          <li>• Teacher workshops and demo classes</li>
+          <li>• Academic showcase / EdTech events</li>
         </ul>
       </div>
 
@@ -506,10 +651,10 @@ const BusinessModelCanvas = () => (
       <div className="md:col-span-2 bg-white p-6 rounded-3xl shadow-sm border border-slate-100">
         <h3 className="font-bold text-indigo-600 mb-4 flex items-center gap-2"><Briefcase className="w-5 h-5" /> Cost Structure</h3>
         <div className="grid grid-cols-2 gap-4 text-sm text-slate-600">
-          <div>• AI API Usage Costs</div>
-          <div>• R&D / Engineering</div>
-          <div>• Marketing & Sales</div>
-          <div>• Server Maintenance</div>
+          <div>• OpenAI API token usage</div>
+          <div>• Product engineering + QA</div>
+          <div>• Teacher onboarding support</div>
+          <div>• Cloud hosting & analytics</div>
         </div>
       </div>
 
@@ -517,10 +662,10 @@ const BusinessModelCanvas = () => (
       <div className="md:col-span-3 bg-white p-6 rounded-3xl shadow-sm border border-slate-100">
         <h3 className="font-bold text-indigo-600 mb-4 flex items-center gap-2"><DollarSign className="w-5 h-5" /> Revenue Streams</h3>
         <div className="grid grid-cols-2 gap-4 text-sm text-slate-600">
-          <div>• Freemium Subscription (B2C)</div>
-          <div>• Institutional Licensing (B2B)</div>
-          <div>• Premium Content Packs</div>
-          <div>• API Licensing for Publishers</div>
+          <div>• School seat license (per semester)</div>
+          <div>• Teacher dashboard subscription</div>
+          <div>• Premium mission packs (exam prep)</div>
+          <div>• District-level annual contracts</div>
         </div>
       </div>
     </div>
@@ -528,13 +673,13 @@ const BusinessModelCanvas = () => (
     {/* Course Relevance Section */}
     <div className="mt-16 bg-slate-900 rounded-[3rem] p-12 text-white">
       <div className="max-w-3xl">
-        <h2 className="text-3xl font-bold mb-8">Course Relevance</h2>
+        <h2 className="text-3xl font-bold mb-8">Academic Relevance</h2>
         <div className="grid sm:grid-cols-2 gap-8">
           {[
-            { title: "Multimodal AI", desc: "Integrates speech (audio), text (analysis), and vision (scaffolding) for holistic learning." },
-            { title: "LLM Applications", desc: "Utilizes Large Language Models for sophisticated grammar parsing and contextual feedback." },
-            { title: "Generative AI", desc: "Dynamically creates unique practice missions based on individual student performance." },
-            { title: "Human-AI Interaction", desc: "Focuses on a supportive, non-judgmental interface to lower the 'Affective Filter' in L2 acquisition." }
+            { title: "Multimodal AI", desc: "Combines learner input, textual correction, and visual scaffolding in one feedback cycle." },
+            { title: "LLM Applications", desc: "Uses structured prompting + schema-constrained output for reliable educational feedback." },
+            { title: "Generative AI", desc: "Produces mission-level follow-up tasks tailored to each speaking error pattern." },
+            { title: "Human-AI Interaction", desc: "Designs low-pressure, iterative practice to reduce anxiety in second-language speaking." }
           ].map((item, i) => (
             <div key={i}>
               <h4 className="text-indigo-400 font-bold mb-2">{item.title}</h4>

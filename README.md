@@ -26,14 +26,14 @@ SpeakQuest utilizes a multimodal approach (Text, Audio, and Visual) to create a 
 - **Styling:** Tailwind CSS (Modern utility-first approach)
 - **Animations:** Motion (for smooth, professional transitions)
 - **Icons:** Lucide React
-- **AI Integration (Conceptual):** Designed for Gemini Multimodal LLM integration.
+- **AI Integration:** Uses OpenAI Responses API to generate structured speaking feedback.
 
 ## Demo Scenario
-1. **Input:** Student says, *"I goed to school yesterday."*
-2. **Analysis:** System identifies the irregular verb error ("goed" -> "went").
-3. **Feedback:** Corrects the sentence, explains the rule, and provides pronunciation tips for "yesterday".
-4. **Visual Aid:** Displays a school-related image to reinforce context.
-5. **Missions:** Generates three follow-up tasks: Sentence Correction, Shadowing, and Creative Picture-based sentence construction.
+1. **Input:** Student says, *"Last weekend I go to the science museum with my cousin and we watch a robot show."*
+2. **Analysis:** OpenAI identifies tense inconsistency (`go → went`, `watch → watched`) and sentence pacing issues.
+3. **Feedback:** App returns a corrected sentence, concise coach note, and pronunciation targets.
+4. **Visual Aid:** Displays contextual classroom image scaffolding.
+5. **Missions:** Generates three focused follow-up tasks (drill, shadowing, and extension speaking challenge).
 
 ## Business Value
 SpeakQuest targets the growing EdTech market by offering a scalable, low-cost alternative to private tutoring. Its value proposition lies in its 24/7 availability, personalized learning paths, and data-driven progress tracking for both students and teachers.
@@ -50,3 +50,8 @@ SpeakQuest targets the growing EdTech market by offering a scalable, low-cost al
 - Personalized voice synthesis for shadowing practice.
 - Gamification elements (badges, levels, streaks).
 - Teacher dashboard for classroom-wide progress monitoring.
+
+## OpenAI Setup
+1. Copy `.env.example` to `.env`.
+2. Fill `OPENAI_API_KEY` with your OpenAI key.
+3. Start the app with `npm run dev` and use the Speaking Lab to send a sentence for live feedback generation.
